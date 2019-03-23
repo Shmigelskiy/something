@@ -6,7 +6,7 @@
   const SWITCH_TO_NIGHT_MODE = 'Switch to Night Mode'
   const NIGHT_MODE_CHANGER_CLASS = 'night-theme'
 
-  const JSON_URL = '/chart_data.json'
+  const JSON_URL = '/something/chart_data.json'
 
   class App {
 
