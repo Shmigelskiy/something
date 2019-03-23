@@ -43,10 +43,6 @@
         if (types[code] === LINE_TYPE) {
           this._series.push(code)
           this._points[code] = this._aggregatePoints(points, MAX_STORING_POINTS_COUNT, AGGREGATE_MODE.AVERAGE)
-          // this._points[code] = []
-          // for(let i = 0; i < 10000;i++) {
-          //   this._points[code].push(Math.round(Math.random() * 1000))
-          // }
         } else {
           this._labels = this._aggregatePoints(points, MAX_STORING_POINTS_COUNT, AGGREGATE_MODE.FIRST)
 
