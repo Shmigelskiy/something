@@ -6,6 +6,8 @@
   const SWITCH_TO_NIGHT_MODE = 'Switch to Night Mode'
   const NIGHT_MODE_CHANGER_CLASS = 'night-theme'
 
+  const JSON_URL = '/chart_data.json'
+
   class App {
 
     constructor() {
@@ -14,7 +16,13 @@
     }
 
     getChartData() {
-      return JSON.parse(chartJson)
+      return fetch(JSON_URL).then(
+        res => res.json(),
+        err => {
+          alert("Data did NOT loaded")
+          return []
+        }
+      )
     }
 
     resizeCharts() {
@@ -41,9 +49,9 @@
       }
     }
 
-    run() {
+    async run() {
       const container = document.getElementById(CHARTS_CONTAINER_ID)
-      const chartsData = this.getChartData()
+      const chartsData = await this.getChartData()
 
       chartsData.forEach((chartData) => {
         const dataSource = new DataSource()
