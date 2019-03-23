@@ -12,6 +12,10 @@
   const BOTTOM_LEGEND_OFFSET = 10
   const TOOLTIP_CIRCLE_RADIUS = 3
 
+  const BILLION = 1000000000
+  const MILLION = 1000000
+  const THOUSAND = 1000
+
   class ChartArea {
 
     constructor(dataSource, state, options = {}) {
@@ -87,8 +91,8 @@
 
     _getScaleValues(startPercent, endPercent) {
       let pointsCount = 0;
-      let minPointValue = null;
-      let maxPointValue = null;
+      let seriesMinPoint = null;
+      let seriesMaxPoint = null;
        
       this._state.visibleSeriesCodes.forEach(code => {
         const points = this._dataSource.getSeriesPoints(code, this._canvasWidth, startPercent, endPercent)
@@ -99,21 +103,32 @@
         }
 
         points.forEach(point => {
-          if(!maxPointValue || point > maxPointValue) {
-            maxPointValue = point
+          if(!seriesMaxPoint || point > seriesMaxPoint) {
+            seriesMaxPoint = point
           }
-          if(!minPointValue || point < minPointValue) {
-            minPointValue = point
+          if(!seriesMinPoint || point < seriesMinPoint) {
+            seriesMinPoint = point
           }
         })
       })
 
       const xStepPx = this._canvasWidth / (pointsCount - 1)
 
-      const pointValuesDelta = maxPointValue - minPointValue
-      const horizontalSectionStep = Math.floor(pointValuesDelta / HORIZONTAL_SECTIONS_COUNT)
-      minPointValue = Math.floor(minPointValue / horizontalSectionStep) * horizontalSectionStep
-      maxPointValue = Math.ceil(maxPointValue / horizontalSectionStep) * horizontalSectionStep
+      const seriesValuesDelta = seriesMaxPoint - seriesMinPoint
+      const stepPrettier = this._getStepPrettier(seriesValuesDelta)
+
+      let horizontalSectionStep = Math.ceil(
+        seriesValuesDelta / HORIZONTAL_SECTIONS_COUNT / stepPrettier
+      ) * stepPrettier
+
+      let minPointValue = Math.floor(seriesMinPoint / horizontalSectionStep) * horizontalSectionStep
+      let maxPointValue = Math.ceil(seriesMaxPoint / horizontalSectionStep) * horizontalSectionStep
+
+      while( HORIZONTAL_SECTIONS_COUNT * horizontalSectionStep < maxPointValue - minPointValue) {
+        horizontalSectionStep += stepPrettier
+        minPointValue = Math.floor(seriesMinPoint / horizontalSectionStep) * horizontalSectionStep
+        maxPointValue = Math.ceil(seriesMaxPoint / horizontalSectionStep) * horizontalSectionStep
+      }
 
       return {
         pointsCount,
@@ -121,6 +136,35 @@
         minPointValue,
         maxPointValue,
         horizontalSectionStep
+      }
+    }
+    
+    _getStepPrettier(delta) {
+      const prettierBase = Math.floor(Math.abs(delta)/ 4 / HORIZONTAL_SECTIONS_COUNT) || 1
+      
+      switch(true) {
+        case prettierBase < 5: {
+          return prettierBase
+        }
+        case prettierBase < 10: {
+          return 5
+        }
+        case prettierBase < 20: {
+          return 10
+        }
+        case prettierBase < 25: {
+          return 20
+        }
+        case prettierBase < 50: {
+          return 25
+        }
+        case prettierBase < 100: {
+          return 50
+        }
+        default: {
+          const signsQty = String(prettierBase).length
+          return Math.pow(10, signsQty - 1)
+        }
       }
     }
 
@@ -270,9 +314,11 @@
 
 
     _hideTooltip() {
-      this._tooltip.innerHTML = ''
-      this._tooltip.style.display = 'none'      
-      this._clearTooltipCanvas()
+      if(this._isTooltipShown) {
+        this._tooltip.innerHTML = ''
+        this._tooltip.style.display = 'none'      
+        this._clearTooltipCanvas()
+      }
     }
 
     _animateSeriesChanging() {
@@ -516,7 +562,7 @@
         
         this._canvasContext.fillStyle = theme.legendColor
         this._canvasContext.fillText(
-          Math.round(lineValue), 
+          this._getPrettyPointLabel(lineValue), 
           HORIZONTAL_SECTION_LABEL_OFFSET, 
           lineYValuePx - HORIZONTAL_SECTION_LABEL_OFFSET
         )
@@ -536,6 +582,21 @@
           nextLabelX = labelXPx + labelWidth + 20
         }
       }
+    }
+
+    _getPrettyPointLabel(point) {
+      const roundedValue = Math.round(point)
+      if(roundedValue > BILLION && roundedValue % (100 * MILLION) === 0) {
+        return `${roundedValue / BILLION}b`
+      }
+      if(roundedValue > MILLION && roundedValue % (100 * THOUSAND) === 0) {
+        return `${roundedValue / MILLION}m`
+      }
+      if(roundedValue > THOUSAND && roundedValue % 100  === 0) {
+        return `${roundedValue / THOUSAND}k`
+      }
+
+      return roundedValue
     }
 
     _getPointIndexByCanvasPosition(xValuePx) {
