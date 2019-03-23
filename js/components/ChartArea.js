@@ -318,11 +318,12 @@
       tooltipHtml += `</div`
       this._tooltip.style.left = null
       this._tooltip.innerHTML = tooltipHtml
+      this._tooltip.style.display = 'block'
 
       const maxTooltipLeftValuePx = this._canvasWidth - this._tooltip.clientWidth
+      console.log(maxTooltipLeftValuePx)
       const tooltipLeftPx = Math.min(Math.max(pointXPx - 30, 0), maxTooltipLeftValuePx)
       this._tooltip.style.left = tooltipLeftPx + 'px'
-      this._tooltip.style.display = 'block'
     }
 
 
