@@ -1,7 +1,16 @@
-// (function () {
+(function () {
   const RESIZER_WIDTH = 2
 
+  /**
+  * ResizerControl - component what contain all resizer dom elements,
+  * which user can interact and theirs logic
+  */
   class ResizerControl {
+
+    /**
+    * Create a ResizerControl.
+    * @param {ChartState} state - current chart state object.
+    */
     constructor(state) {
       this._state = state
 
@@ -9,7 +18,7 @@
     }
 
     _setElementsPosition() {
-      const { startPercent, endPercent} = this._state
+      const { startPercent, endPercent } = this._state
 
       const leftBorderOffset = startPercent
       const rightBorderOffset = 100 - endPercent
@@ -97,11 +106,11 @@
       event.stopPropagation()
 
       if (
-        !this._isCenterAreaDragging && 
+        !this._isCenterAreaDragging &&
         !this._isLeftResizerDragging &&
         !this._isRightResizerDragging
       ) {
-          return
+        return
       }
 
       const resizerWidth = this.element.clientWidth
@@ -158,4 +167,4 @@
   }
 
   window.ResizerControl = ResizerControl
-// })()
+})()

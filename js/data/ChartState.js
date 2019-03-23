@@ -1,6 +1,10 @@
-// (function(){
-  const MINIMAL_VIEWING_AREA_PERCENT = 4
+(function () {
 
+  /**
+  * Main purpose of this class is creating 
+  * "single source of truth" of chart state attributes
+  * and theirs changes tracking where this is necessary.
+  */
   class ChartState {
     static get Events() {
       return {
@@ -29,14 +33,14 @@
     }
 
     updateLeftBorder(startPercent) {
-      if(startPercent && this.startPercent !== startPercent) {
+      if (startPercent && this.startPercent !== startPercent) {
         this.startPercent = startPercent
         this._fire(ChartState.Events.LEFT_BORDER_CHANGED)
       }
     }
 
     updateRightBorder(endPercent) {
-      if(endPercent && this.endPercent !== endPercent) {
+      if (endPercent && this.endPercent !== endPercent) {
         this.endPercent = endPercent
         this._fire(ChartState.Events.RIGHT_BORDER_CHANGED)
       }
@@ -44,16 +48,16 @@
 
     moveViewingArea(startPercent, endPercent) {
       let areChanged = false
-      if(startPercent && this.startPercent !== startPercent) {
+      if (startPercent && this.startPercent !== startPercent) {
         this.startPercent = startPercent
         areChanged = true
       }
-      if(endPercent && this.endPercent !== endPercent) {
+      if (endPercent && this.endPercent !== endPercent) {
         this.endPercent = endPercent
         areChanged = true
       }
 
-      if(areChanged) {
+      if (areChanged) {
         this._fire(ChartState.Events.VIEWING_AREA_CHANGED)
       }
     }
@@ -65,21 +69,21 @@
 
     setSeriesStatus(seriesCode, isShown) {
       this.visibleSeriesCodes = this.visibleSeriesCodes.filter(code => code != seriesCode)
-      if(isShown) {
+      if (isShown) {
         this.visibleSeriesCodes.push(seriesCode)
       }
       this._fire(ChartState.Events.SERIES_CHANGED)
     }
 
     setTheme(theme) {
-      if(this.theme !== theme) {
+      if (this.theme !== theme) {
         this.theme = theme
         this._fire(ChartState.Events.THEME_CHANGED)
       }
     }
 
     on(eventName, handler) {
-      const eventData = { eventName , handler }
+      const eventData = { eventName, handler }
       this._eventHandlers.push(eventData)
 
       return () => {
@@ -88,8 +92,8 @@
     }
 
     _fire(event) {
-      this._eventHandlers.forEach(({eventName, handler}) => {
-        if(eventName === event) {
+      this._eventHandlers.forEach(({ eventName, handler }) => {
+        if (eventName === event) {
           handler()
         }
       });
@@ -97,4 +101,4 @@
   }
 
   window.ChartState = ChartState
-// })()
+})()

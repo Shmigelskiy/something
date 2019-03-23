@@ -1,9 +1,21 @@
-// (function() {
+(function () {
   const CHECKBOX_CLASS_NAME = 'checkbox'
   const INPUT_TYPE = 'checkbox'
 
+  /**
+  * CheckBox - simple checkbox component
+  */
   class CheckBox {
 
+    /**
+     * Create a CheckBox.
+     * @param {string} id - identifier for checkbox data.
+     * @param {boolean} value - initial value.
+     * @param {string} label - text label.
+     * @param {string} color - checkbox icon color.
+     * @param {Function} onChange - callback what fires on checkbox change.
+     *  Passed params are id and current value
+     */
     constructor(id, value, label, color, onChange) {
       this._id = id
       this._label = label
@@ -18,7 +30,7 @@
       return this._element
     }
 
-    _generateCheckboxId(){
+    _generateCheckboxId() {
       return String(Math.random() + this._id + Math.random())
     }
 
@@ -53,4 +65,6 @@
       this._element.appendChild(label)
     }
   }
-// })()
+
+  window.CheckBox = CheckBox
+})()

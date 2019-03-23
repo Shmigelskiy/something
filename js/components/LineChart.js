@@ -1,9 +1,19 @@
-// (function (){
+(function () {
   const CHART_HEIGHT = 400
 
+  /**
+  * LineChart - base chart class, where all chart parts
+  * are initiated. Also this class provide interaction 
+  * with chart from outside
+  */
   class LineChart {
 
-    constructor(dataSource){
+    /**
+    * Create a LineChart.
+    * @param {DataSource} dataSource - data source of displayed data.
+    * @param {ChartState} state - current chart state object.
+    */
+    constructor(dataSource) {
       this._dataSource = dataSource
       this._init()
     }
@@ -30,8 +40,8 @@
 
       const series = this._dataSource.getSeries()
       this._state.setVisibleSeries(series)
-      
-      this._initDom() 
+
+      this._initDom()
 
       this._state.on(ChartState.Events.THEME_CHANGED, this._setThemeClass.bind(this))
     }
@@ -41,7 +51,7 @@
       this._containerElement.className = `line-chart ${theme.themeClassName}`
     }
 
-    _initDom() {    
+    _initDom() {
       this._chart = new ChartArea(this._dataSource, this._state, {
         height: CHART_HEIGHT,
         isBordered: true,
@@ -60,4 +70,4 @@
   }
 
   window.LineChart = LineChart
-// })()
+})()

@@ -100,6 +100,7 @@
   background-color: black;
   opacity: 0.1;
   z-index: 2;
+  cursor: col-resize;
 }
 
 .line-chart.night-theme .line-chart-resizer__left-resizer, 
@@ -112,6 +113,7 @@
   top: 0;
   height: 100%;
   z-index: 1;
+  cursor: e-resize;
 }
 
 .checkbox {

@@ -1,8 +1,17 @@
-// (function () {
+(function () {
   const CANVAS_HEIGHT = 80
 
+  /**
+  * Resizer - component related to changing
+  * chart's visible borders. 
+  */
   class Resizer {
-  
+
+    /**
+    * Create a Resizer.
+    * @param {DataSource} dataSource - data source of displayed data.
+    * @param {ChartState} state - current chart state object.
+    */
     constructor(dataSource, state) {
       this._dataSource = dataSource
       this._state = state
@@ -34,4 +43,4 @@
   }
 
   window.Resizer = Resizer
-// })()
+})()

@@ -2,12 +2,12 @@
 (function () {
   const CHARTS_CONTAINER_ID = 'charts'
   const CHANGE_MODE_ELEMENT_ID = 'mode-changer'
-  const SWITCH_TO_DAY_MODE = 'Switch to Day Mode' 
+  const SWITCH_TO_DAY_MODE = 'Switch to Day Mode'
   const SWITCH_TO_NIGHT_MODE = 'Switch to Night Mode'
   const NIGHT_MODE_CHANGER_CLASS = 'night-theme'
 
   class App {
-    
+
     constructor() {
       this._charts = []
       this._isDayMode = true
@@ -26,7 +26,7 @@
     onModeChange(event) {
       this._isDayMode = !this._isDayMode
 
-      if(this._isDayMode) {
+      if (this._isDayMode) {
         this._charts.forEach(chart => {
           chart.setDayTheme()
         })
@@ -51,13 +51,13 @@
         const chart = new LineChart(dataSource)
         container.appendChild(chart.getElement())
         this._charts.push(chart)
-      });     
+      });
 
       this.resizeCharts()
 
       const modeChanger = document.getElementById(CHANGE_MODE_ELEMENT_ID)
       modeChanger.addEventListener('click', this.onModeChange.bind(this))
-     
+
     }
   }
 
