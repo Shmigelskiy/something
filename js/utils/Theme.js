@@ -31,4 +31,20 @@ class Theme {
     }
     return colorMap[this._theme] || colorMap[Theme.defaultTheme]
   }
+
+  get tooltipLineColor() {
+    const colorMap = {
+      [ChartState.Themes.DAY]: 'grey',
+      [ChartState.Themes.NIGHT]: '#354353',
+    }
+    return colorMap[this._theme] || colorMap[Theme.defaultTheme]
+  }
+
+  get backgroundColor() {
+    const colorMap = {
+      [ChartState.Themes.DAY]: 'white',
+      [ChartState.Themes.NIGHT]: '#242f3e',
+    }
+    return colorMap[this._theme] || colorMap[Theme.defaultTheme]
+  }
 }

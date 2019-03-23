@@ -5,17 +5,11 @@
 
     constructor(dataSource){
       this._dataSource = dataSource
-      console.log(this)
       this._init()
     }
 
     getElement() {
       return this._containerElement
-    }
-
-    addToContainer(container) {
-      container.appendChild(this._containerElement)
-      this.resize()
     }
 
     resize() {
@@ -51,7 +45,8 @@
       this._chart = new ChartArea(this._dataSource, this._state, {
         height: CHART_HEIGHT,
         isBordered: true,
-        isLegendShown: true
+        isLegendShown: true,
+        isTooltipShown: true
       })
       this._resizer = new Resizer(this._dataSource, this._state)
       const visibleSeriesBar = new VisibleSeriesBar(this._dataSource, this._state)

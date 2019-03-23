@@ -1,0 +1,19 @@
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+.mode-changer {
+  text-align: center;
+  font-size: 18px;
+  color: #35a3ea;
+  cursor: pointer;
+  padding: 15px;
+  user-select: none;
+  background-color: white;
+}
+
+.mode-changer.night-theme {
+  background-color: #242f3e;
+}

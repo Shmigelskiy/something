@@ -2,13 +2,15 @@
   const DEFAULT_OPTIONS = {
     height: 400,
     isLegendShown: false,
-    isBordered: false
+    isBordered: false,
+    isTooltipShown: false
   }
   const ANIMATION_DURATION = 150
-  const HORIZONTAL_SECTIONS_COUNT = 6
+  const HORIZONTAL_SECTIONS_COUNT = 5
   const HORIZONTAL_SECTION_LABEL_OFFSET = 5
   const BOTTOM_LEGEND_HEIGHT = 25
   const BOTTOM_LEGEND_OFFSET = 10
+  const TOOLTIP_CIRCLE_RADIUS = 3
 
   class ChartArea {
 
@@ -19,16 +21,19 @@
       const {
         height,
         isBordered,
-        isLegendShown
+        isLegendShown,
+        isTooltipShown
       } = options
       this._canvasHeight = height || DEFAULT_OPTIONS.height
       this._isChartBordered = isBordered || DEFAULT_OPTIONS.isBordered
       this._isLegendShown = isLegendShown || DEFAULT_OPTIONS.isLegendShown
+      this._isTooltipShown = isTooltipShown || DEFAULT_OPTIONS.isTooltipShown
       
       this._startPercent = this._state.startPercent
       this._endPercent = this._state.endPercent
 
       this._pointsCache = {}
+      this._labelsCache = []
 
       this._isAnimating = false
 
@@ -37,6 +42,7 @@
       this._xStepPx = 0
       this._minPointValue = 0;
       this._maxPointValue = 0;
+      this._horizontalSectionStep = 0;
 
       this._initDom()
       this._drawChart()
@@ -65,6 +71,7 @@
       this._maxPointValue = scaleValues.maxPointValue
       this._xStepPx = scaleValues.xStepPx
       this._pointsCount = scaleValues.pointsCount
+      this._horizontalSectionStep = scaleValues.horizontalSectionStep
       this._startXOffsetPx = 0
 
       this._loadChartPoints()
@@ -113,6 +120,7 @@
         xStepPx,
         minPointValue,
         maxPointValue,
+        horizontalSectionStep
       }
     }
 
@@ -121,10 +129,15 @@
       this._state.visibleSeriesCodes.forEach(code => {
         this._pointsCache[code] = this._getSeriesPoints(code)
       })
+      this._labelsCache = this._getLegendLabels()
     }
 
     _clearCanvas() {
       this._canvasContext.clearRect(0, 0, this._canvasWidth, this._canvasHeight)
+    }
+    
+    _clearTooltipCanvas() {
+      this._tooltipCanvasContext.clearRect(0, 0, this._canvasWidth, this._canvasHeight)
     }
 
     _getSeriesPoints(code) {
@@ -155,9 +168,8 @@
       this._canvasContext = this._canvas.getContext('2d')
 
       this._element = document.createElement('div')
+      this._element.className = 'chart-area'
       this._element.appendChild(this._canvas)
-
-      this._resize()
 
       window.addEventListener('resize', ()=> {
         this._resize()
@@ -179,12 +191,96 @@
         this._state.on(LEFT_BORDER_CHANGED, this._animateLeftBorderChanging.bind(this))
         this._state.on(VIEWING_AREA_CHANGED, this._animateViewingAreaChanging.bind(this))
       }
+      if(this._isTooltipShown) {
+        this._tooltipCanvas = document.createElement('canvas')
+        this._tooltipCanvas.className = 'chart-area__tooltip-canvas'
+        this._tooltipCanvasContext = this._tooltipCanvas.getContext('2d')
+        this._tooltip = document.createElement('div')
+        this._tooltip.className = 'chart-area__tooltip'
+
+        this._element.appendChild(this._tooltipCanvas)
+        this._element.appendChild(this._tooltip)
+
+        this._tooltipCanvas.addEventListener('mousemove', this._showTooltip.bind(this))
+        this._tooltipCanvas.addEventListener('touchdown', this._showTooltip.bind(this))
+        this._tooltipCanvas.addEventListener('mouseleave', this._hideTooltip.bind(this))
+      }
+
+      this._resize()
+    }
+
+    _showTooltip(event) {
+      event.preventDefault()
+      event.stopPropagation()
+
+      this._clearTooltipCanvas()
+
+      const canvasBoundingRect = this._tooltipCanvas.getBoundingClientRect()
+      const mouseX = event.pageX - canvasBoundingRect.x
+      const pointIndex = this._getPointIndexByCanvasPosition(mouseX)
+
+      const pointXPx = pointIndex * this._xStepPx + this._startXOffsetPx
+
+      const theme = new Theme(this._state.theme)
+      this._tooltipCanvasContext.beginPath()
+      this._tooltipCanvasContext.strokeStyle = theme.legendColor
+      this._tooltipCanvasContext.moveTo(pointXPx, 0)
+      this._tooltipCanvasContext.lineTo(pointXPx, this._getChartHeight())
+      this._tooltipCanvasContext.stroke()
+
+      const title = DateUtils.getWeekDateString(this._labelsCache[pointIndex])
+      let tooltipHtml = `
+        <div class='chart-area__tooltip-title'>${title}</div>
+        <div class='chart-area__tooltip-values-container'>  
+      `
+
+      this._state.visibleSeriesCodes.forEach(code => {
+        const point = this._pointsCache[code][pointIndex]
+        if(!point) {
+          return 
+        }
+        const seriesColor = this._dataSource.getSeriesColor(code)
+        const seriesName = this._dataSource.getSeriesName(code)
+
+        const pointYPx = this._getPointYValuePx(point)
+
+        this._tooltipCanvasContext.beginPath();
+        this._tooltipCanvasContext.strokeStyle = seriesColor
+        this._tooltipCanvasContext.fillStyle = theme.backgroundColor
+        this._tooltipCanvasContext.arc(pointXPx, pointYPx, TOOLTIP_CIRCLE_RADIUS, 0, 2 * Math.PI);
+        this._tooltipCanvasContext.fill()
+        this._tooltipCanvasContext.stroke()
+
+        tooltipHtml += `
+          <div class='chart-area__tooltip-value' style='color: ${seriesColor}'>
+            <span>${point}</span>
+            <span>${seriesName}</span>
+          </div>
+        `  
+      })
+      tooltipHtml += `</div`
+      this._tooltip.style.left = null
+      this._tooltip.innerHTML = tooltipHtml
+
+      const maxTooltipLeftValuePx = this._canvasWidth - this._tooltip.clientWidth
+      const tooltipLeftPx = Math.min(Math.max(pointXPx - 30, 0), maxTooltipLeftValuePx) 
+      this._tooltip.style.left = tooltipLeftPx + 'px'
+      this._tooltip.style.display = 'block'
+    }
+
+
+    _hideTooltip() {
+      this._tooltip.innerHTML = ''
+      this._tooltip.style.display = 'none'      
+      this._clearTooltipCanvas()
     }
 
     _animateSeriesChanging() {
       if(this._isAnimating) {
         return
       }
+      this._hideTooltip()
+
       let newScaleValues
       if(this._isChartBordered) {
         newScaleValues = this._getScaleValues(
@@ -194,7 +290,8 @@
       } else {
         newScaleValues = this._getScaleValues() 
       }
-
+      
+      this._horizontalSectionStep = newScaleValues.horizontalSectionStep
       this._loadChartPoints()
 
       this._isAnimating = true
@@ -223,6 +320,8 @@
       if( this._endPercent === this._state.endPercent){
         return this._drawChart()
       }
+      this._hideTooltip()
+
       const newScaleValues = this._getScaleValues(
         this._state.startPercent,
         this._state.endPercent,
@@ -235,6 +334,7 @@
         this._endPercent,
       )
       this._pointsCount = displayingScaleValues.pointsCount
+      this._horizontalSectionStep = newScaleValues.horizontalSectionStep
       this._loadChartPoints()
       
       this._isAnimating = true
@@ -265,6 +365,8 @@
       if(this._startPercent === this._state.startPercent){
         return this._drawChart()
       }
+      this._hideTooltip()
+
       const newScaleValues = this._getScaleValues(
         this._state.startPercent,
         this._state.endPercent,
@@ -276,6 +378,7 @@
         this._startPercent,
         this._endPercent,
       )
+      this._horizontalSectionStep = newScaleValues.horizontalSectionStep
       this._pointsCount = displayingScaleValues.pointsCount
       this._loadChartPoints()
 
@@ -313,6 +416,7 @@
       ){
         return this._drawChart()
       }
+      this._hideTooltip()
 
       const newScaleValues = this._getScaleValues(
         this._state.startPercent,
@@ -327,6 +431,7 @@
         this._startPercent,
         this._endPercent,
       )
+      this._horizontalSectionStep = newScaleValues.horizontalSectionStep
       this._pointsCount = displayingScaleValues.pointsCount
       this._loadChartPoints()
 
@@ -399,10 +504,8 @@
     _renderLegend() {
       const theme = new Theme(this._state.theme)
 
-      const pointValuesDelta = this._maxPointValue - this._minPointValue
-      const lineStep = Math.floor(pointValuesDelta / HORIZONTAL_SECTIONS_COUNT)
-      let lineValue = Math.round(this._minPointValue)
-      for(let i = 0; i <= 6; i++) {
+      let lineValue = this._minPointValue
+      for(let i = 0; i <= HORIZONTAL_SECTIONS_COUNT; i++) {
         const lineYValuePx = this._getPointYValuePx(lineValue)
 
         this._canvasContext.beginPath()
@@ -413,17 +516,16 @@
         
         this._canvasContext.fillStyle = theme.legendColor
         this._canvasContext.fillText(
-          lineValue, 
+          Math.round(lineValue), 
           HORIZONTAL_SECTION_LABEL_OFFSET, 
           lineYValuePx - HORIZONTAL_SECTION_LABEL_OFFSET
         )
-        lineValue += lineStep
+        lineValue += this._horizontalSectionStep
       }
 
-      const legendLabels = this._getLegendLabels()
-      let nextLabelX = 0
+      let nextLabelX = this._startXOffsetPx
       for(let idx = 0; idx < this._pointsCount; idx++) {
-        const pointLabel = legendLabels[idx]
+        const pointLabel = DateUtils.getShortDateString(this._labelsCache[idx])
         const pointXPx = idx * this._xStepPx + this._startXOffsetPx
         const labelWidth = this._canvasContext.measureText(pointLabel).width
         const labelXPx = pointXPx - labelWidth / 2
@@ -444,6 +546,11 @@
       const containerWidth = this._element.clientWidth || document.clientWidth
       this._canvas.width = this._canvasWidth = containerWidth
       this._canvas.height = this._canvasHeight
+
+      if(this._tooltipCanvas) {
+        this._tooltipCanvas.width = this._canvasWidth
+        this._tooltipCanvas.height = this._canvasHeight
+      }
     }
   
   }

@@ -37,9 +37,8 @@
           //   this._points[code].push(Math.round(Math.random() * 1000))
           // }
         } else {
-          this._labels = this._transformLabels(
-            this._aggregatePoints(points, MAX_STORING_POINTS_COUNT, AGGREGATE_MODE.FIRST)
-          )
+          this._labels = this._aggregatePoints(points, MAX_STORING_POINTS_COUNT, AGGREGATE_MODE.FIRST)
+          
         }
       })
 
@@ -120,20 +119,6 @@
         aggregatedPoints.push(points[idx])
       }
       return aggregatedPoints
-    }
-
-    _transformLabels(timestampLabels) {
-      const monthShortNameMap = [
-        "Jan", 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-      ]
-
-      return timestampLabels.map(timestamp => {
-        const date = new Date(timestamp)
-        const shortMonth = monthShortNameMap[date.getMonth()]
-        const day = date.getDate()
-        return `${shortMonth} ${day}`
-      })
     }
 
   }
