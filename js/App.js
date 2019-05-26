@@ -17,7 +17,7 @@
     constructor() {
       this._chart = null
       this._isDayMode = true
-      this._pointsCount = 300
+      this._pointsCount = 1000000
     }
 
     getPointsCount() {
@@ -31,7 +31,7 @@
 
     getGeneratedChartData() {
       const labels = []
-      const seriesIds = [String(Math.random()), String(Math.random())] 
+      const seriesIds = [String(Math.random())] 
       const series = {}, names = {}, colors = {}
       seriesIds.forEach((id, idx) => {
         series[id] = []
