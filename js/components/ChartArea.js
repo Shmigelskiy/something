@@ -114,11 +114,11 @@
         }
 
         points.forEach(point => {
-          if (!seriesMaxPoint || point > seriesMaxPoint) {
-            seriesMaxPoint = point
+          if (!seriesMaxPoint || (point.max || point) > seriesMaxPoint) {
+            seriesMaxPoint = point.max || point
           }
-          if (!seriesMinPoint || point < seriesMinPoint) {
-            seriesMinPoint = point
+          if (!seriesMinPoint || (point.min || point) < seriesMinPoint) {
+            seriesMinPoint = point.min || point
           }
         })
       })
@@ -296,10 +296,11 @@
         if (!point) {
           return
         }
+        const pointValue = point.min || point
         const seriesColor = this._dataSource.getSeriesColor(code)
         const seriesName = this._dataSource.getSeriesName(code)
 
-        const pointYPx = this._getPointYValuePx(point)
+        const pointYPx = this._getPointYValuePx(pointValue)
 
         this._tooltipCanvasContext.beginPath();
         this._tooltipCanvasContext.strokeStyle = seriesColor
@@ -310,7 +311,7 @@
 
         tooltipHtml += `
           <div class='chart-area__tooltip-value' style='color: ${seriesColor}'>
-            <span>${point}</span>
+            <span>${pointValue}</span>
             <span>${seriesName}</span>
           </div>
         `
@@ -545,12 +546,26 @@
         this._canvasContext.beginPath()
         this._canvasContext.strokeStyle = color
         points.forEach((point, idx) => {
-          const yValuePx = this._getPointYValuePx(point)
+          let yValueMinPx, yValueMaxPx
+          if(typeof point === 'object') {
+            yValueMinPx = this._getPointYValuePx(point.min)
+            if(point.min != point.max) {
+              yValueMaxPx = this._getPointYValuePx(point.max)
+            } else {
+              yValueMaxPx = yValueMinPx
+            }
+          } else {
+            yValueMinPx = yValueMaxPx = this._getPointYValuePx(point)
+          }
           const xValuePx = idx * this._xStepPx + this._startXOffsetPx
           if (!idx) {
-            this._canvasContext.moveTo(xValuePx, yValuePx)
+            this._canvasContext.moveTo(xValuePx, yValueMinPx)
           } else {
-            this._canvasContext.lineTo(xValuePx, yValuePx)
+            this._canvasContext.lineTo(xValuePx, yValueMinPx)
+          }
+
+          if(yValueMaxPx != yValueMinPx) {
+            this._canvasContext.lineTo(xValuePx, yValueMaxPx)
           }
 
         })

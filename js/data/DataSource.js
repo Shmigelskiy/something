@@ -1,8 +1,8 @@
 (function () {
   const MAX_STORING_POINTS_COUNT = 100000
-  const LINE_TYPE = 'line'
   const AGGREGATE_MODE = {
     AVERAGE: 'AVERAGE',
+    MIN_MAX: "MIN_MAX",
     FIRST: 'FIRST',
   }
 
@@ -29,25 +29,22 @@
 
     updateData(data = {}) {
       const {
-        columns = [],
+        series = {},
         colors = {},
         names = {},
-        types = {},
+        labels = []
       } = data
 
       this._colors = colors
       this._names = names
 
-      columns.forEach(columnData => {
-        const [code, ...points] = columnData
-        if (types[code] === LINE_TYPE) {
-          this._series.push(code)
-          this._points[code] = this._aggregatePoints(points, MAX_STORING_POINTS_COUNT, AGGREGATE_MODE.AVERAGE)
-        } else {
-          this._labels = this._aggregatePoints(points, MAX_STORING_POINTS_COUNT, AGGREGATE_MODE.FIRST)
-
-        }
+      Object.keys(series || {}).forEach(code => {
+        const points = series[code]
+        this._series.push(code)
+        this._points[code] = this._aggregatePoints(points, MAX_STORING_POINTS_COUNT, AGGREGATE_MODE.AVERAGE)
       })
+
+      this._labels = this._aggregatePoints(labels, MAX_STORING_POINTS_COUNT, AGGREGATE_MODE.FIRST)
 
     }
 
@@ -73,7 +70,7 @@
         points = points.slice(startIdx || 0, endIdx)
       }
 
-      return this._aggregatePoints(points, maxCount, AGGREGATE_MODE.AVERAGE)
+      return this._aggregatePoints(points, maxCount, AGGREGATE_MODE.MIN_MAX)
     }
 
     getLegendLabels(maxCount, startPercent, endPercent) {
@@ -97,6 +94,8 @@
       }
 
       switch (mode) {
+        case AGGREGATE_MODE.MIN_MAX:
+          return this._aggregateWithMinMaxValue(points, pointsPerGroup, pointsCount)
         case AGGREGATE_MODE.AVERAGE:
           return this._aggregateWithAverageValue(points, pointsPerGroup, pointsCount)
         case AGGREGATE_MODE.FIRST:
@@ -104,6 +103,27 @@
         default:
           return this._aggregateWithAverageValue(points, pointsPerGroup, pointsCount)
       }
+    }
+
+    _aggregateWithMinMaxValue(points, pointsPerGroup, pointsCount) {
+      const aggregatedPoints = []
+      let min = Number.MAX_VALUE, max = Number.MIN_VALUE, count = 0
+      for (let idx = 0; idx < pointsCount; idx++) {
+        if(points[idx] > max) {
+          max = points[idx]
+        }
+        if(points[idx] < min) {
+          min = points[idx]
+        }
+        count++
+        if (count === pointsPerGroup || idx === pointsCount - 1) {
+          aggregatedPoints.push({min, max})
+          min = Number.MAX_VALUE
+          max = Number.MIN_VALUE
+          count = 0
+        }
+      }
+      return aggregatedPoints
     }
 
     _aggregateWithAverageValue(points, pointsPerGroup, pointsCount) {
